@@ -16,11 +16,11 @@ export function ChatCanvas() {
   }, [messages, isThinking]);
 
   return (
-    <div className="flex min-h-dvh flex-col">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <main
         ref={scrollRef}
         className={[
-          'flex-1 overflow-y-auto overscroll-contain',
+          'chat-scroll flex-1 min-h-0 overflow-x-hidden overflow-y-auto overscroll-y-contain',
           hasStarted ? 'pb-36' : 'pb-44',
         ].join(' ')}
       >

@@ -5,7 +5,7 @@ import { ChatCanvas } from './components/chat/ChatCanvas';
 export default function App() {
   return (
     <ChatProvider>
-      <div className="relative min-h-dvh">
+      <div className="relative flex h-dvh flex-col overflow-hidden">
         <div className="pointer-events-none fixed inset-0 overflow-hidden">
           <div className="absolute -left-1/4 top-1/4 h-[500px] w-[500px] animate-float rounded-full bg-electric-violet/[0.04] blur-[100px]" />
           <div
