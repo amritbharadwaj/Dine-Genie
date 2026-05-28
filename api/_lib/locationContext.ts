@@ -92,8 +92,7 @@ export function buildDistrictSearchQuery(
   pinnedDistrict?: string | null,
 ): string {
   const districtName = ctx.district?.name ?? pinnedDistrict ?? 'Hong Kong';
-  const parts = [ctx.raw, districtName, 'Hong Kong', 'restaurant'].filter(Boolean);
-  return parts.join(' ');
+  return [ctx.raw, 'best restaurant food', districtName, 'Hong Kong'].filter(Boolean).join(' ');
 }
 
 export function buildRestaurantSearchQuery(

@@ -78,20 +78,18 @@ function restaurantFromPlaceInsights(insights: PlaceInsights, district: string):
     district,
     mtrStation: district,
     priceRange: mapPriceLevel(insights.priceLevel),
-    cuisine: 'Local favourite',
-    bestDish: insights.insights.mentionedDishes[0] ?? 'Ask staff for today\'s specialty',
+    cuisine: insights.cuisineHint ?? insights.openRice?.cuisine ?? 'Local favourite',
+    bestDish: insights.openRice?.bestDish ?? insights.insights.mentionedDishes[0] ?? 'Ask staff for today\'s specialty',
     rating: insights.googleRating,
-    description: insights.insights.summary.replace(/\*\*/g, ''),
-    highlights: [
-      ...insights.insights.topPraised.slice(0, 2),
-      `${insights.totalReviews.toLocaleString()} Google reviews`,
-    ],
+    openRiceScore: insights.openRice?.score,
+    michelin: insights.openRice?.michelin,
+    description: insights.insights.aggregateSummary.replace(/\*\*/g, ''),
+    highlights: insights.insights.bestPicks.slice(0, 3),
   };
 }
 
-function buildDistrictIntro(ctx: QueryContext, insights: PlaceInsights): string {
-  const area = ctx.district?.name ?? 'your area';
-  return `For **${area}**, Google diners highlight **${insights.name}** as a strong pick based on live reviews.
+function buildDistrictIntro(_ctx: QueryContext, insights: PlaceInsights): string {
+  return `${insights.insights.aggregateSummary}
 
 **Address:** ${insights.address}`;
 }
@@ -188,7 +186,7 @@ async function buildDistrictResponse(ctx: QueryContext, pinnedDistrict?: string 
   }
 
   return {
-    content: `${buildDistrictIntro(ctx, insights)}\n\n${formatReviewInsightsForChat(insights)}`,
+    content: `${buildDistrictIntro(ctx, insights)}`,
     widgets: [
       { type: 'restaurant', data: restaurantFromPlaceInsights(insights, area) },
       { type: 'google-reviews', data: insights },
@@ -196,7 +194,7 @@ async function buildDistrictResponse(ctx: QueryContext, pinnedDistrict?: string 
   };
 }
 
-/** Fallback when Gemini API is unavailable */
+/** Fallback when Kimi API is unavailable */
 export async function sendMockChatMessage(payload: ChatPayload): Promise<ChatResponse> {
   const lastUserMessage = [...payload.messages].reverse().find((m) => m.role === 'user');
   if (!lastUserMessage) {

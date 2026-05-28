@@ -105,14 +105,23 @@ export function getPlacesUnavailableMessage(
 }
 
 export function formatReviewInsightsForChat(insights: PlaceInsights): string {
-  const { insights: analysis, googleRating, totalReviews, name } = insights;
+  const { insights: analysis, googleRating, totalReviews, name, openRice } = insights;
   const lines: string[] = [
-    `### Google Reviews — ${name}`,
+    `### ${name} — Review aggregate`,
     '',
-    analysis.summary,
+    analysis.aggregateSummary,
     '',
-    `**Google Rating:** ${googleRating.toFixed(1)}/5 · **${totalReviews.toLocaleString()}** reviews`,
+    `**Google:** ${googleRating.toFixed(1)}/5 · **${totalReviews.toLocaleString()}** reviews`,
   ];
+
+  if (openRice) {
+    lines.push(`**OpenRice:** ${openRice.score.toFixed(1)}/5 · ${openRice.cuisine}`);
+  }
+
+  if (analysis.bestPicks.length > 0) {
+    lines.push('', '**Best picks:**');
+    analysis.bestPicks.forEach((pick) => lines.push(`- ${pick}`));
+  }
 
   if (analysis.mentionedDishes.length > 0) {
     lines.push('', '**Dishes diners mention most:**');

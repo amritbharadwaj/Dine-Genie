@@ -35,9 +35,19 @@ export interface PlaceInsights {
   totalReviews: number;
   googleMapsUri?: string;
   priceLevel?: string;
+  primaryType?: string;
+  cuisineHint?: string;
+  openRice?: {
+    score: number;
+    bestDish: string;
+    cuisine: string;
+    michelin?: string;
+  };
   reviews: GoogleReview[];
   insights: {
     summary: string;
+    aggregateSummary: string;
+    bestPicks: string[];
     topPraised: string[];
     commonConcerns: string[];
     mentionedDishes: string[];

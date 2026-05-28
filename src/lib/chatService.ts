@@ -8,8 +8,8 @@ interface ChatApiResponse {
 }
 
 /**
- * Primary chat handler — calls Gemini via /api/chat with Google Places grounding.
- * Falls back to mock responses if Gemini is unavailable.
+ * Primary chat handler — calls Kimi via /api/chat with Google Places grounding.
+ * Falls back to mock responses if Kimi is unavailable.
  */
 export async function sendChatMessage(payload: ChatPayload): Promise<ChatResponse> {
   try {
@@ -31,7 +31,7 @@ export async function sendChatMessage(payload: ChatPayload): Promise<ChatRespons
       return result.data;
     }
 
-    console.warn('[Chat] Gemini unavailable:', result.error ?? response.status);
+    console.warn('[Chat] Kimi unavailable:', result.error ?? response.status);
   } catch (error) {
     console.warn('[Chat] Network error calling /api/chat:', error);
   }

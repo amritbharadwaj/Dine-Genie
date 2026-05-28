@@ -43,30 +43,31 @@ export interface ChatResponseData {
   widgets?: ChatWidget[];
 }
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL ?? 'gemini-2.0-flash';
+const KIMI_API_BASE = (process.env.KIMI_API_BASE_URL ?? 'https://api.moonshot.ai/v1').replace(/\/$/, '');
+const KIMI_MODEL = process.env.KIMI_MODEL ?? 'kimi-k2.6';
 
 const SYSTEM_PROMPT = `You are HK DineAgent — an ultra-smart culinary concierge for foodies in Hong Kong.
 
 Your personality: premium, knowledgeable, concise, and locally grounded. Write in clear markdown with **bold** for restaurant names and dish highlights.
 
-Critical location rules:
-- **Tung Chung** (Lantau Island, near the airport) is NOT **Chungking Mansions** (Tsim Sha Tsui). Never confuse them.
-- Always respect the user's stated district and pinned location context.
-- Reference MTR stations and districts when helpful.
+Critical rules:
+- ONLY recommend places where people go to eat or drink — restaurants, cafés, bars, pubs, dai pai dongs, bakeries, etc. Never hotels, Airbnbs, hostels, airports, or malls unless naming a specific in-house restaurant.
+- **Tung Chung** (Lantau Island) is NOT **Chungking Mansions** (TST). Never confuse districts.
+- Respect the user's pinned location context.
 
-When LIVE GOOGLE PLACES DATA is provided in the prompt:
-- Treat it as ground truth for ratings, review counts, and diner sentiment.
-- Do NOT invent Google ratings or review quotes — use only what is supplied.
-- Synthesize insights naturally; mention standout dishes if listed.
+When LIVE RESTAURANT DATA is provided:
+- Lead with the supplied **aggregate summary** — do not repeat raw Google/OpenRice stats verbatim.
+- Use OpenRice scores when provided as the local HK dining benchmark alongside Google.
+- Highlight **best picks** (must-try dishes, cuisine, price, vibe).
+- Do NOT invent ratings or review quotes.
+- Do NOT output a separate "Google Reviews —" section — the UI renders review cards.
 
-When no live data is provided, you may use general Hong Kong dining knowledge but say when you're unsure.
+Keep responses focused: aggregate verdict, 2–3 actionable tips (MTR exit, queue, when to go).`;
 
-Keep responses focused and actionable — top picks, must-order dishes, practical tips (queues, MTR exits, price range).`;
-
-function getGeminiApiKey(): string {
-  const key = process.env.GEMINI_API_KEY ?? process.env.GOOGLE_AI_API_KEY;
+function getKimiApiKey(): string {
+  const key = process.env.KIMI_API_KEY ?? process.env.MOONSHOT_API_KEY;
   if (!key) {
-    throw new Error('GEMINI_API_KEY is not configured');
+    throw new Error('KIMI_API_KEY is not configured');
   }
   return key;
 }
@@ -86,34 +87,36 @@ function restaurantFromPlaceInsights(insights: PlaceInsights, district: string):
     district,
     mtrStation: district,
     priceRange: mapPriceLevel(insights.priceLevel),
-    cuisine: 'Local favourite',
-    bestDish: insights.insights.mentionedDishes[0] ?? 'Ask staff for today\'s specialty',
+    cuisine: insights.cuisineHint ?? insights.openRice?.cuisine ?? 'Restaurant',
+    bestDish: insights.openRice?.bestDish ?? insights.insights.mentionedDishes[0] ?? 'Ask staff for today\'s specialty',
     rating: insights.googleRating,
-    description: insights.insights.summary.replace(/\*\*/g, ''),
-    highlights: [
-      ...insights.insights.topPraised.slice(0, 2),
-      `${insights.totalReviews.toLocaleString()} Google reviews`,
-    ],
+    openRiceScore: insights.openRice?.score,
+    michelin: insights.openRice?.michelin,
+    description: insights.insights.aggregateSummary.replace(/\*\*/g, ''),
+    highlights: insights.insights.bestPicks.slice(0, 3),
   };
 }
 
 function formatGroundingBlock(insights: PlaceInsights): string {
   const reviewSnippets = insights.reviews
     .slice(0, 3)
-    .map((r) => `- (${r.rating}/5, ${r.relativeTime}) ${r.text.slice(0, 280)}`)
+    .map((r) => `- (${r.rating}/5, ${r.relativeTime}) ${r.text.slice(0, 220)}`)
     .join('\n');
 
-  return `[LIVE GOOGLE PLACES DATA — ground truth]
+  return `[LIVE RESTAURANT DATA — food establishment only]
 Name: ${insights.name}
+Type: ${insights.cuisineHint ?? 'Restaurant'} (${insights.primaryType ?? 'restaurant'})
 Address: ${insights.address}
-Google Rating: ${insights.googleRating}/5 (${insights.totalReviews} reviews)
-Price level: ${insights.priceLevel ?? 'unknown'}
-Summary: ${insights.insights.summary}
-Mentioned dishes: ${insights.insights.mentionedDishes.join(', ') || 'none extracted'}
-Praised for: ${insights.insights.topPraised.join('; ') || 'n/a'}
-Concerns: ${insights.insights.commonConcerns.join('; ') || 'none noted'}
-Recent review snippets:
-${reviewSnippets || 'none available'}`;
+Google: ${insights.googleRating}/5 (${insights.totalReviews} reviews)
+OpenRice: ${insights.openRice ? `${insights.openRice.score}/5 · ${insights.openRice.cuisine}` : 'not in local catalog'}
+Price: ${insights.priceLevel ?? 'unknown'}
+Aggregate summary: ${insights.insights.aggregateSummary}
+Best picks: ${insights.insights.bestPicks.join(' · ') || 'n/a'}
+Mentioned dishes: ${insights.insights.mentionedDishes.join(', ') || 'none'}
+Themes diners praise: ${insights.insights.topPraised.join('; ') || 'n/a'}
+Concerns: ${insights.insights.commonConcerns.join('; ') || 'none'}
+Review snippets:
+${reviewSnippets || 'none'}`;
 }
 
 async function gatherPlaceGrounding(
@@ -137,7 +140,7 @@ async function gatherPlaceGrounding(
     searchQuery = buildDistrictSearchQuery(ctx, pinnedDistrict);
   } else if (pinnedDistrict) {
     restaurantName = pinnedDistrict;
-    searchQuery = `${userMessage} ${pinnedDistrict} Hong Kong restaurant`;
+    searchQuery = `${userMessage} best restaurant food ${pinnedDistrict} Hong Kong`;
   } else {
     return null;
   }
@@ -153,51 +156,57 @@ async function gatherPlaceGrounding(
   }
 }
 
-async function callGemini(
+async function callKimi(
   messages: ChatMessageInput[],
   pinnedDistrict: string | null | undefined,
   groundingBlock: string | null,
 ): Promise<string> {
-  const apiKey = getGeminiApiKey();
+  const apiKey = getKimiApiKey();
   const pinnedNote = pinnedDistrict
     ? `User pinned location context: ${pinnedDistrict}, Hong Kong.`
     : 'No pinned location — infer from the user message.';
 
   const systemText = [SYSTEM_PROMPT, pinnedNote, groundingBlock].filter(Boolean).join('\n\n');
 
-  const contents = messages.map((m) => ({
-    role: m.role === 'assistant' ? 'model' : 'user',
-    parts: [{ text: m.content }],
-  }));
+  const chatMessages = [
+    { role: 'system' as const, content: systemText },
+    ...messages.map((message) => ({
+      role: message.role,
+      content: message.content,
+    })),
+  ];
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: systemText }] },
-        contents,
-        generationConfig: {
-          temperature: 0.65,
-          maxOutputTokens: 2048,
-        },
-      }),
+  const response = await fetch(`${KIMI_API_BASE}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
     },
-  );
+    body: JSON.stringify({
+      model: KIMI_MODEL,
+      messages: chatMessages,
+      temperature: 0.65,
+      max_tokens: 2048,
+    }),
+  });
 
   if (!response.ok) {
     const errorBody = await response.text();
-    throw new Error(`Gemini API failed (${response.status}): ${errorBody.slice(0, 400)}`);
+    throw new Error(`Kimi API failed (${response.status}): ${errorBody.slice(0, 400)}`);
   }
 
   const data = (await response.json()) as {
-    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+    choices?: Array<{ message?: { content?: string } }>;
+    error?: { message?: string };
   };
 
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+  if (data.error?.message) {
+    throw new Error(`Kimi API error: ${data.error.message}`);
+  }
+
+  const text = data.choices?.[0]?.message?.content?.trim();
   if (!text) {
-    throw new Error('Gemini returned an empty response');
+    throw new Error('Kimi returned an empty response');
   }
 
   return text;
@@ -220,14 +229,19 @@ export async function handleChatRequest(body: ChatRequestBody): Promise<{
     const placeInsights = await gatherPlaceGrounding(lastUser.content, pinnedDistrict);
     const groundingBlock = placeInsights ? formatGroundingBlock(placeInsights) : null;
 
-    const content = await callGemini(messages, pinnedDistrict, groundingBlock);
+    const kimiReply = await callKimi(messages, pinnedDistrict, groundingBlock);
 
     const widgets: ChatWidget[] = [];
+    let content = kimiReply;
+
     if (placeInsights) {
       const district =
         extractQueryContext(lastUser.content).district?.name ?? pinnedDistrict ?? 'Hong Kong';
+
       widgets.push({ type: 'restaurant', data: restaurantFromPlaceInsights(placeInsights, district) });
       widgets.push({ type: 'google-reviews', data: placeInsights });
+
+      content = `${placeInsights.insights.aggregateSummary}\n\n${kimiReply}`;
     }
 
     return {

@@ -23,7 +23,8 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 export function GoogleReviewsCard({ insights }: GoogleReviewsCardProps) {
-  const { reviews, insights: analysis, googleRating, totalReviews, googleMapsUri } = insights;
+  const { reviews, insights: analysis, googleRating, totalReviews, googleMapsUri, openRice, cuisineHint } =
+    insights;
 
   return (
     <section className="animate-scale-in w-full min-w-0 max-w-full overflow-hidden rounded-2xl border border-white/10 bg-charcoal-light/40 backdrop-blur-md">
@@ -34,12 +35,17 @@ export function GoogleReviewsCard({ insights }: GoogleReviewsCardProps) {
           </div>
           <div>
             <p className="text-[10px] font-medium uppercase tracking-widest text-white/40">
-              Google Reviews
+              Review aggregate
             </p>
-            <div className="flex items-center gap-2">
-              <span className="text-base font-semibold text-white">{googleRating.toFixed(1)}</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-base font-semibold text-white">Google {googleRating.toFixed(1)}</span>
               <StarRating rating={googleRating} />
               <span className="text-xs text-white/40">({totalReviews.toLocaleString()})</span>
+              {openRice && (
+                <span className="rounded-full bg-orange-400/10 px-2 py-0.5 text-[11px] text-orange-300 ring-1 ring-orange-400/20">
+                  OpenRice {openRice.score.toFixed(1)}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -57,9 +63,33 @@ export function GoogleReviewsCard({ insights }: GoogleReviewsCardProps) {
       </header>
 
       <div className="space-y-4 p-4">
-        <p className="break-words rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-sm leading-relaxed text-white/70">
-          {analysis.summary.replace(/\*\*/g, '')}
-        </p>
+        <div className="rounded-xl border border-cyber-lime/15 bg-cyber-lime/[0.05] px-4 py-3 glow-lime">
+          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-cyber-lime/80">
+            DineAgent summary
+          </p>
+          <p className="break-words text-sm leading-relaxed text-white/85">
+            {analysis.aggregateSummary.replace(/\*\*/g, '')}
+          </p>
+          {cuisineHint && (
+            <p className="mt-2 text-[11px] text-white/45">Food type: {cuisineHint}</p>
+          )}
+        </div>
+
+        {analysis.bestPicks.length > 0 && (
+          <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3">
+            <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-white/40">
+              Best picks
+            </p>
+            <ul className="space-y-1.5">
+              {analysis.bestPicks.map((pick) => (
+                <li key={pick} className="flex gap-2 text-sm text-white/75">
+                  <span className="text-cyber-lime">→</span>
+                  <span className="break-words">{pick}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {(analysis.mentionedDishes.length > 0 || analysis.topPraised.length > 0) && (
           <div className="grid gap-3 sm:grid-cols-2">
@@ -100,7 +130,7 @@ export function GoogleReviewsCard({ insights }: GoogleReviewsCardProps) {
         {reviews.length > 0 && (
           <div className="space-y-2">
             <p className="px-1 text-[10px] font-semibold uppercase tracking-wider text-white/35">
-              Recent reviews
+              Recent Google reviews
             </p>
             <div className="space-y-2">
               {reviews.slice(0, 3).map((review, index) => (

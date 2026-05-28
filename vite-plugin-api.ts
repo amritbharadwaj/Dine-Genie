@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Plugin, ViteDevServer } from 'vite';
 import { loadEnv } from 'vite';
-import { handleChatRequest } from './api/_lib/geminiChat';
+import { handleChatRequest } from './api/_lib/kimiChat';
 import { classifyPlacesError, handlePlaceReviewsRequest } from './api/_lib/googlePlaces';
 
 function readRequestBody(req: IncomingMessage): Promise<string> {
@@ -32,8 +32,10 @@ function statusForPlacesError(error?: string, errorCode?: ReturnType<typeof clas
 function applyEnvKeys(server: ViteDevServer) {
   const env = loadEnv(server.config.mode, process.cwd(), '');
   if (env.GOOGLE_PLACES_API_KEY) process.env.GOOGLE_PLACES_API_KEY = env.GOOGLE_PLACES_API_KEY;
-  if (env.GEMINI_API_KEY) process.env.GEMINI_API_KEY = env.GEMINI_API_KEY;
-  if (env.GOOGLE_AI_API_KEY) process.env.GOOGLE_AI_API_KEY = env.GOOGLE_AI_API_KEY;
+  if (env.KIMI_API_KEY) process.env.KIMI_API_KEY = env.KIMI_API_KEY;
+  if (env.MOONSHOT_API_KEY) process.env.MOONSHOT_API_KEY = env.MOONSHOT_API_KEY;
+  if (env.KIMI_API_BASE_URL) process.env.KIMI_API_BASE_URL = env.KIMI_API_BASE_URL;
+  if (env.KIMI_MODEL) process.env.KIMI_MODEL = env.KIMI_MODEL;
 }
 
 export function apiDevPlugin(): Plugin {
