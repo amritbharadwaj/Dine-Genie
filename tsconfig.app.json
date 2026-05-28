@@ -23,5 +23,5 @@
       "@/*": ["src/*"]
     }
   },
-    "include": ["src", "lib/locationContext.ts"]
+    "include": ["src", "api/_lib/locationContext.ts"]
 }

@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { handleChatRequest } from '../../lib/geminiChat';
+import { handleChatRequest } from '../_lib/geminiChat';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -14,12 +14,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ ok: false, error: 'Method not allowed' });
   }
 
-  const result = await handleChatRequest(req.body);
+  try {
+    const result = await handleChatRequest(req.body);
 
-  if (!result.ok) {
-    const status = result.error?.includes('not configured') ? 503 : 500;
-    return res.status(status).json(result);
+    if (!result.ok) {
+      const status = result.error?.includes('not configured') ? 503 : 500;
+      return res.status(status).json(result);
+    }
+
+    return res.status(200).json(result);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return res.status(500).json({ ok: false, error: message });
   }
-
-  return res.status(200).json(result);
 }

@@ -46,13 +46,14 @@ export async function fetchGooglePlaceReviews(
     });
 
     let result: PlaceReviewsApiResponse;
+    const rawText = await response.text();
     try {
-      result = (await response.json()) as PlaceReviewsApiResponse;
+      result = JSON.parse(rawText) as PlaceReviewsApiResponse;
     } catch {
       return {
         insights: null,
         errorCode: 'unknown',
-        errorMessage: `Server returned ${response.status} (invalid response — try restarting npm run dev)`,
+        errorMessage: rawText.slice(0, 200) || `Server returned ${response.status}`,
       };
     }
 

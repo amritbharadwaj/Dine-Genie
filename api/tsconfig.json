@@ -2,12 +2,12 @@
   "compilerOptions": {
     "target": "ES2022",
     "lib": ["ES2022"],
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "CommonJS",
+    "moduleResolution": "node",
     "strict": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "noEmit": true
   },
-  "include": ["../lib/**/*.ts"]
+  "include": ["./**/*.ts", "./_lib/**/*.ts"]
 }

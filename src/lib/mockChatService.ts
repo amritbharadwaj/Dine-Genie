@@ -9,7 +9,7 @@ import {
   buildRestaurantSearchQuery,
   extractQueryContext,
   type QueryContext,
-} from '../../lib/locationContext';
+} from '../../api/_lib/locationContext';
 import {
   fetchGooglePlaceReviews,
   formatReviewInsightsForChat,

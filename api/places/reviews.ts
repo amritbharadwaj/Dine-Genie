@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { handlePlaceReviewsRequest } from '../../lib/googlePlaces';
+import { handlePlaceReviewsRequest } from '../_lib/googlePlaces';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -14,15 +14,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ ok: false, error: 'Method not allowed' });
   }
 
-  const result = await handlePlaceReviewsRequest(req.body);
+  try {
+    const result = await handlePlaceReviewsRequest(req.body);
 
-  if (!result.ok) {
-    const status = result.errorCode === 'missing_key' ? 503
-      : result.errorCode === 'permission_denied' ? 403
-      : result.errorCode === 'not_found' ? 404
-      : 500;
-    return res.status(status).json(result);
+    if (!result.ok) {
+      const status = result.errorCode === 'missing_key' ? 503
+        : result.errorCode === 'permission_denied' ? 403
+        : result.errorCode === 'not_found' ? 404
+        : 500;
+      return res.status(status).json(result);
+    }
+
+    return res.status(200).json(result);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return res.status(500).json({ ok: false, error: message });
   }
-
-  return res.status(200).json(result);
 }
