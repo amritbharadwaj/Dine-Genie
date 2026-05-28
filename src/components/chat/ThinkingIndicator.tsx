@@ -1,7 +1,7 @@
 export function ThinkingIndicator() {
   return (
-    <div className="flex w-full animate-fade-up justify-start">
-      <div className="max-w-[min(100%,42rem)] space-y-3">
+    <div className="flex w-full min-w-0 animate-fade-up justify-start">
+      <div className="w-full min-w-0 max-w-full space-y-3 sm:max-w-[42rem]">
         <div className="mb-1 flex items-center gap-2 px-1">
           <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-electric-violet/20 ring-1 ring-electric-violet/30">
             <span className="text-[10px] font-bold text-electric-violet">DA</span>

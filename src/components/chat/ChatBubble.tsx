@@ -15,14 +15,14 @@ export function ChatBubble({ message, index }: ChatBubbleProps) {
   return (
     <div
       className={[
-        'flex w-full animate-fade-up',
+        'flex w-full min-w-0 animate-fade-up',
         isUser ? 'justify-end' : 'justify-start',
       ].join(' ')}
       style={{ animationDelay: `${index * 50}ms` }}
     >
       <div
         className={[
-          'max-w-[min(100%,42rem)] space-y-3',
+          'w-full min-w-0 max-w-full space-y-3 sm:max-w-[42rem]',
           isUser ? 'items-end' : 'items-start',
         ].join(' ')}
       >
@@ -37,16 +37,16 @@ export function ChatBubble({ message, index }: ChatBubbleProps) {
 
         <div
           className={[
-            'rounded-2xl px-4 py-3 text-[15px] leading-relaxed',
+            'w-full min-w-0 max-w-full rounded-2xl px-4 py-3 text-[15px] leading-relaxed',
             isUser
               ? 'bg-white/10 text-white/95 backdrop-blur-sm border border-white/10 rounded-br-md'
               : 'glass-panel glow-violet rounded-bl-md text-white/90',
           ].join(' ')}
         >
           {isUser ? (
-            <p>{message.content}</p>
+            <p className="break-words">{message.content}</p>
           ) : (
-            <div className="prose-agent">
+            <div className="prose-agent min-w-0 break-words">
               <ReactMarkdown
                 components={{
                   p: ({ children }) => (
@@ -75,7 +75,7 @@ export function ChatBubble({ message, index }: ChatBubbleProps) {
         </div>
 
         {!isUser && message.widgets && message.widgets.length > 0 && (
-          <div className="space-y-3 pt-1">
+          <div className="w-full min-w-0 max-w-full space-y-3 pt-1">
             {message.widgets.map((widget, i) => {
               if (widget.type === 'restaurant') {
                 return (

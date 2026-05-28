@@ -12,28 +12,30 @@ export function ChatCanvas() {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = scrollRef.current;
+    if (!container) return;
+    container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
   }, [messages, isThinking]);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+    <div className="relative min-h-0 flex-1 overflow-hidden">
       <main
         ref={scrollRef}
         className={[
-          'chat-scroll flex-1 min-h-0 overflow-x-hidden overflow-y-auto overscroll-y-contain',
-          hasStarted ? 'pb-36' : 'pb-44',
+          'chat-scroll absolute inset-x-0 top-0 overflow-x-hidden overflow-y-scroll overscroll-y-contain',
+          'bottom-[calc(9.5rem+env(safe-area-inset-bottom))]',
         ].join(' ')}
       >
-        <div className="mx-auto w-full max-w-3xl px-4 pt-6">
+        <div className="mx-auto w-full min-w-0 max-w-3xl px-4 pt-6">
           {!hasStarted ? (
             <DiscoveryDashboard />
           ) : (
-            <div className="space-y-6 pb-4">
+            <div className="space-y-6 pb-6">
               {messages.map((message, index) => (
                 <ChatBubble key={message.id} message={message} index={index} />
               ))}
               {isThinking && <ThinkingIndicator />}
-              <div ref={bottomRef} className="h-1" />
+              <div ref={bottomRef} className="h-px" aria-hidden="true" />
             </div>
           )}
         </div>

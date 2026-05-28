@@ -26,7 +26,7 @@ export function GoogleReviewsCard({ insights }: GoogleReviewsCardProps) {
   const { reviews, insights: analysis, googleRating, totalReviews, googleMapsUri } = insights;
 
   return (
-    <section className="animate-scale-in overflow-hidden rounded-2xl border border-white/10 bg-charcoal-light/40 backdrop-blur-md">
+    <section className="animate-scale-in w-full min-w-0 max-w-full overflow-hidden rounded-2xl border border-white/10 bg-charcoal-light/40 backdrop-blur-md">
       <header className="flex items-center justify-between gap-3 border-b border-white/10 bg-white/[0.02] px-5 py-4">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-400/10 ring-1 ring-amber-400/20">
@@ -57,7 +57,7 @@ export function GoogleReviewsCard({ insights }: GoogleReviewsCardProps) {
       </header>
 
       <div className="space-y-4 p-4">
-        <p className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-sm leading-relaxed text-white/70">
+        <p className="break-words rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-sm leading-relaxed text-white/70">
           {analysis.summary.replace(/\*\*/g, '')}
         </p>
 
@@ -132,7 +132,7 @@ export function GoogleReviewsCard({ insights }: GoogleReviewsCardProps) {
                       )}
                     </div>
                   </div>
-                  <p className="line-clamp-3 text-sm leading-relaxed text-white/55">{review.text}</p>
+                  <p className="line-clamp-3 break-words text-sm leading-relaxed text-white/55">{review.text}</p>
                 </article>
               ))}
             </div>

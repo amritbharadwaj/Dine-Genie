@@ -6,7 +6,7 @@ export function AppHeader() {
   const { clearChat, hasStarted } = useChat();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-obsidian/80 backdrop-blur-xl">
+    <header className="z-40 shrink-0 border-b border-white/[0.06] bg-obsidian/80 backdrop-blur-xl">
       <div className="mx-auto flex h-14 max-w-3xl items-center justify-between px-4">
         <div className="flex items-center gap-3">
           <Button size="icon" variant="ghost" className="md:hidden" aria-label="Menu">

@@ -19,7 +19,7 @@ export function RestaurantCard({ restaurant, compact = false }: RestaurantCardPr
   return (
     <article
       className={[
-        'group relative overflow-hidden rounded-2xl border border-white/10 bg-charcoal-light/60 backdrop-blur-md',
+        'group relative w-full min-w-0 max-w-full overflow-hidden rounded-2xl border border-white/10 bg-charcoal-light/60 backdrop-blur-md',
         'transition-all duration-500 hover:border-white/20 hover:shadow-[0_8px_40px_rgb(0_0_0/0.4)]',
         compact ? 'p-4' : 'p-5',
         'animate-scale-in',
